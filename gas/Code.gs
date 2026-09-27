@@ -21,6 +21,8 @@ function prepare_(book) {
     if(!s){s=book.insertSheet(name);s.appendRow(name==='同步狀態'?['學生鍵','狀態']:['事件ID','接收時間']);}
     s.hideSheet();
   });
+  const starter = book.getSheetByName('工作表1');
+  if (starter && starter.getLastRow() === 0 && !starter.isSheetHidden()) starter.hideSheet();
   return sheet;
 }
 function book_(){const id=PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');if(!id)throw new Error('尚未初始化');return SpreadsheetApp.openById(id);}
@@ -46,11 +48,22 @@ function merge_(old,p){
 }
 function text_(value){const s=String(value||'');return /^[=+\-@\t\r]/.test(s)?"'"+s:s;}
 function row_(s){const v=k=>s.scores[k]??'';return [text_(s.identity.classroom),text_(s.identity.seat),text_(s.identity.name),v('assessmentOne'),v('assessmentTwo'),v('gameOneBest'),v('gameTwoBest'),v('challenge'),v('learning'),v('gameOne'),v('gameTwo'),s.completed,text_(s.shortAnswer),new Date()];}
+function cleanupTestData_(){
+  const book=book_();const sheet=prepare_(book);let rows=0,statesRemoved=0,eventsRemoved=0;
+  if(sheet.getLastRow()>1){const values=sheet.getRange(2,1,sheet.getLastRow()-1,1).getDisplayValues();for(let i=values.length-1;i>=0;i--)if(values[i][0]==='發布驗證刪除'){sheet.deleteRow(i+2);rows++;}}
+  const states=book.getSheetByName('同步狀態');
+  if(states.getLastRow()>1){const values=states.getRange(2,2,states.getLastRow()-1,1).getDisplayValues();for(let i=values.length-1;i>=0;i--)if(values[i][0].includes('發布驗證刪除')){states.deleteRow(i+2);statesRemoved++;}}
+  const events=book.getSheetByName('同步事件');
+  if(events.getLastRow()>1){const values=events.getRange(2,1,events.getLastRow()-1,1).getDisplayValues();for(let i=values.length-1;i>=0;i--)if(values[i][0].startsWith('release-test-')){events.deleteRow(i+2);eventsRemoved++;}}
+  return {ok:true,cleanup:true,rows,states:statesRemoved,events:eventsRemoved};
+}
 function doPost(e){
   const lock=LockService.getScriptLock();
   try{
     if(!e.postData||e.postData.contents.length>20000)throw new Error('請求過大');
-    const p=validate_(JSON.parse(e.postData.contents));
+    const input=JSON.parse(e.postData.contents);
+    if(input?.courseId===COURSE_ID&&input?.action==='cleanupTestData')return json_(cleanupTestData_());
+    const p=validate_(input);
     lock.waitLock(20000);
     const book=book_();const sheet=prepare_(book);const events=book.getSheetByName('同步事件');
     if(events.getRange('A:A').createTextFinder(p.eventId).matchEntireCell(true).findNext())return json_({ok:true,eventId:p.eventId,duplicate:true});
