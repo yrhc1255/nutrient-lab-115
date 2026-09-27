@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+.env*
+*.tsbuildinfo
+*.log
+verification/screenshots/
+.offline-build/
+.clasp.json
+**/.clasp.json
+.clasprc.json
+private-release/
+verification/design-repair/
+verification/*actual*.json

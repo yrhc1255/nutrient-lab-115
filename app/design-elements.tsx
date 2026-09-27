@@ -1,0 +1,19 @@
+export function LeafMark(){return <svg viewBox="0 0 60 65" aria-hidden="true"><path d="M29 59Q29 26 48 8" fill="none" stroke="#238366" strokeWidth="4"/><path d="M32 33C18 11 36 2 50 1c3 19-4 29-18 32" fill="#5ca347"/><path d="M28 43C5 44 5 28 3 19c19 0 27 9 25 24" fill="#83b578"/><path d="M32 50C48 31 57 40 58 43c-8 13-15 14-26 7" fill="#00889c"/></svg>}
+export function DesignIcon({name}:{name:string}){
+ const common={fill:'none',stroke:'currentColor',strokeWidth:2.4,strokeLinecap:'round' as const,strokeLinejoin:'round' as const};
+ return <svg viewBox="0 0 48 48" aria-hidden="true" {...common}>{name==='flask'?<><path d="M19 5h10m-8 0v16L10 39q-2 4 3 4h22q5 0 3-4L27 21V5M17 29h14"/><circle cx="22" cy="34" r="2"/><circle cx="29" cy="38" r="1"/></>:name==='book'?<><path d="M24 12Q13 5 4 10v29q10-4 20 2 10-6 20-2V10q-10-5-20 2v29"/><path d="M10 16h7m-7 7h7m14-7h7m-7 7h7"/></>:name==='target'?<><circle cx="23" cy="26" r="16"/><circle cx="23" cy="26" r="10"/><circle cx="23" cy="26" r="3"/><path d="m23 26 18-20m-6 0h6v7"/></>:name==='chart'?<><path d="M8 40V28h6v12m7 0V18h6v22m7 0V8h6v32"/></>:name==='flag'?<><path d="M14 44V6m1 1c9-8 14 8 25 0v18c-11 8-17-8-25 0M4 44h24"/></>:name==='note'?<><rect x="8" y="6" width="32" height="37" rx="3"/><path d="M18 4h12v7H18zM15 20l3 3 5-6m3 4h8M15 31l3 3 5-6m3 4h8"/></>:name==='person'?<><circle cx="24" cy="13" r="7"/><path d="M9 42v-7c0-15 30-15 30 0v7"/></>:name==='home'?<><path d="m4 23 20-18 20 18M10 19v24h28V19M20 43V28h9v15"/></>:name==='send'?<><path d="m4 20 39-15-12 38-8-15-19-8Zm19 8L43 5M23 28l-2 13 9-9"/></>:<><circle cx="20" cy="20" r="14"/><path d="m30 31 13 13"/></>}</svg>;
+}
+
+// Reuse only the illustrated scene from the approved mockup. Interface text,
+// question board and selectable door interiors are rendered as live elements.
+export function AdventureScene(){return <svg className="adventure-scene" viewBox="0 0 1482 687" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+ <defs><linearGradient id="scene-sky" x2="0" y2="1"><stop stopColor="#97defb"/><stop offset="1" stopColor="#c3eafb"/></linearGradient><mask id="scene-art-mask"><rect width="1482" height="687" fill="white"/><rect x="13" y="16" width="408" height="65" rx="32" fill="black"/><rect x="1350" y="16" width="124" height="65" rx="32" fill="black"/></mask><linearGradient id="stone-face" x2=".8" y2="1"><stop stopColor="#788f9f"/><stop offset="1" stopColor="#526d83"/></linearGradient><linearGradient id="door-amber" x2="0" y2="1"><stop stopColor="#f1b971"/><stop offset="1" stopColor="#ce752e"/></linearGradient><linearGradient id="door-teal" x2="0" y2="1"><stop stopColor="#53bcca"/><stop offset="1" stopColor="#178796"/></linearGradient><linearGradient id="door-gold" x2="0" y2="1"><stop stopColor="#f5d571"/><stop offset="1" stopColor="#d9ad30"/></linearGradient></defs>
+ <rect width="1482" height="687" fill="url(#scene-sky)"/><image href="/art/game-reference.png" x="-28" y="-211" width="1536" height="1024" mask="url(#scene-art-mask)"/>
+ <rect x="452" y="84" width="680" height="85" rx="12" fill="#fff8e9"/>
+ <rect x="620" y="190" width="241" height="36" rx="18" fill="#fff"/>
+ <rect x="101" y="268" width="260" height="51" rx="24" fill="#fff"/>
+ <path d="M428 505V352a80 80 0 0 1 160 0v153z" fill="url(#door-amber)"/><path d="M708 505V352a80 80 0 0 1 160 0v153z" fill="url(#door-teal)"/><path d="M989 505V352a80 80 0 0 1 160 0v153z" fill="url(#door-gold)"/>
+ <path d="m40 373 116-12 14 113-113 13z" fill="#bb9366"/><path d="m61 399 70-8m-65 29 63-7m-60 29 53-6" stroke="#d2b18b" strokeWidth="3"/>
+ <path d="m1270 181 185-25-1 68-184 25z" fill="#c7a478"/><path d="m1300 211 107-14m-14-11 14 11-12 16" fill="none" stroke="#fff4ce" strokeWidth="7"/>
+ <path d="m1290 322 140-31 30 42-15 61-45 29-80-19z" fill="url(#stone-face)"/><path d="m1290 513 127-12 57 58-7 55-160 27-25-64z" fill="url(#stone-face)"/>
+ </svg>}
