@@ -71,4 +71,4 @@ GAS 原始碼在 `gas/`。2026-09-27 已由擁有者完成 Google 授權與 `set
 公開學生網站：<https://yrhc1255.github.io/nutrient-lab-115/>
 公開原始碼：<https://github.com/yrhc1255/nutrient-lab-115>
 
-目前程式與 21 項測試已完成，GitHub Pages 與 GAS 已發布；沒有建立 Firebase、正式教師帳號或跨裝置作答資料庫。
+目前程式與 22 項測試已完成，GitHub Pages 與 GAS 已發布；沒有建立 Firebase、正式教師帳號或跨裝置作答資料庫。

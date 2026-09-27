@@ -45,6 +45,7 @@ export function readLocal():CourseState{
  try{
   const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
   if(x?.version!==2||typeof x.sessionId!=='string'||!x.identity||!['classroom','seat','name'].every(k=>typeof x.identity[k]==='string')||typeof x.started!=='boolean'||!x.answers||typeof x.answers!=='object'||!Array.isArray(x.explored)||!x.activities||!Array.isArray(x.events))return fresh();
+  if(x.identity.classroom==='發布驗證刪除'&&x.identity.seat==='999'&&x.identity.name==='公開網站測試')return fresh();
   const ids=new Set(PAGES.flatMap(p=>p.questions?.map(q=>q.id)||[]));
   for(const [id,a] of Object.entries(x.answers) as [string,AnswerRecord][]){if(!ids.has(id)||!a||!Number.isInteger(a.attempts)||a.attempts<1||a.attempts>10000||!Number.isInteger(a.points)||a.points<0||a.points>3||typeof a.done!=='boolean'||!Array.isArray(a.answer)||!a.answer.every(v=>typeof v==='string'))return fresh();}
   for(const [id,list] of Object.entries(x.activities) as [string,ActivityResult[]][]){if(!PAGES.some(p=>p.id===id)||!Array.isArray(list)||list.some(r=>!r||!Number.isFinite(r.score)||r.score<0||!Array.isArray(r.answers)||!r.answers.every(a=>typeof a==='string')||!Array.isArray(r.correct)||!r.correct.every(a=>typeof a==='boolean')||typeof r.at!=='string'))return fresh();}
