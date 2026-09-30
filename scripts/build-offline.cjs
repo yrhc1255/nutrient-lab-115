@@ -15,7 +15,7 @@ async function main() {
   for (const name of ['home', 'guide', 'lesson', 'game', 'reading', 'results']) {
     art[name] = 'data:image/png;base64,' + (await fs.readFile(path.join(project, 'public', 'art', `${name}-reference.png`))).toString('base64');
   }
-  const modules = ['course-app', 'course-art', 'course-data', 'course-state', 'course-questions', 'course-explorations', 'course-games', 'design-elements', 'score-sync', 'score-sync-panel', 'sync-config'];
+  const modules = ['course-app', 'course-art', 'course-data', 'course-state', 'course-questions', 'course-explorations', 'course-games', 'challenge-leaderboard', 'design-elements', 'score-sync', 'score-sync-panel', 'sync-config'];
   for (const name of modules) {
     const filename = name + (['course-data', 'course-state', 'score-sync', 'sync-config'].includes(name) ? '.ts' : '.tsx');
     let source = await fs.readFile(path.join(app, filename), 'utf8');

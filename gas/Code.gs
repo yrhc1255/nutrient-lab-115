@@ -27,7 +27,32 @@ function prepare_(book) {
 }
 function book_(){const id=PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');if(!id)throw new Error('尚未初始化');return SpreadsheetApp.openById(id);}
 function json_(value){return ContentService.createTextOutput(JSON.stringify(value)).setMimeType(ContentService.MimeType.JSON);}
-function doGet(){return json_({ok:true,courseId:COURSE_ID,ready:!!PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID')});}
+function challengeLeaders_(rows){
+  const students=new Map();
+  rows.forEach(row=>{
+    let state;try{state=JSON.parse(row[1]);}catch{return;}
+    const score=state?.scores?.challenge;
+    const classroom=String(state?.identity?.classroom||'').trim().normalize('NFKC');
+    const seat=String(state?.identity?.seat||'').trim().normalize('NFKC');
+    if(!classroom||!seat||classroom==='發布驗證刪除'||!Number.isInteger(score)||score<0||score>60000)return;
+    const seatKey=/^\d+$/.test(seat)?String(Number(seat)):seat;
+    const key=JSON.stringify([classroom,seatKey]);
+    const entry={classroom,seat:/^\d+$/.test(seat)?seatKey.padStart(2,'0'):seat,score};
+    if(!students.has(key)||score>students.get(key).score)students.set(key,entry);
+  });
+  const top=[...students.values()].sort((a,b)=>b.score-a.score||a.classroom.localeCompare(b.classroom,'zh-TW',{numeric:true})||a.seat.localeCompare(b.seat,'zh-TW',{numeric:true})).slice(0,10);
+  let rank=0;return top.map((entry,i)=>{if(i===0||entry.score!==top[i-1].score)rank=i+1;return {rank,...entry};});
+}
+function doGet(e){
+  if(e?.parameter?.action==='leaderboard'){
+    try{
+      const sheet=book_().getSheetByName('同步狀態');
+      const rows=sheet&&sheet.getLastRow()>1?sheet.getRange(2,1,sheet.getLastRow()-1,2).getValues():[];
+      return json_({ok:true,courseId:COURSE_ID,leaders:challengeLeaders_(rows)});
+    }catch{return json_({ok:false,error:'排行榜暫時無法載入，請稍後重試。'});}
+  }
+  return json_({ok:true,courseId:COURSE_ID,ready:!!PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID')});
+}
 function validate_(p){
   if(!p||p.courseId!==COURSE_ID||typeof p.eventId!=='string'||typeof p.sessionId!=='string'||!/^[-\w]{8,100}$/.test(p.eventId)||!/^[-\w]{8,100}$/.test(p.sessionId)||!Number.isInteger(p.revision)||p.revision<1||p.revision>1000000)throw new Error('格式錯誤');
   if(!p.identity||!['classroom','seat','name'].every(k=>typeof p.identity[k]==='string'&&p.identity[k].trim().length>0&&p.identity[k].length<=24))throw new Error('資料不完整');

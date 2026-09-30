@@ -13,7 +13,7 @@ export function ScoreSyncPanel({state,teacher}:{state:CourseState;teacher:boolea
    let queue=readQueue();if(!queue.length)return;
    if(queue.length&&!navigator.onLine)throw new Error('離線');
    while(queue.length&&!teacherRef.current){setMessage('正在上傳成績……');await sendScore(SYNC_ENDPOINT,queue[0]);acknowledge(queue[0]);queue=readQueue();}
-   if(!teacherRef.current)setMessage('成績已上傳至老師的成績表。');
+   if(!teacherRef.current){setMessage('成績已上傳至老師的成績表。');window.dispatchEvent(new Event('nutrient-score-uploaded'));}
   }catch{setMessage('成績尚未上傳，已保留在本機；連線後會重試。');}
   finally{active.current=false;setBusy(false);}
  };

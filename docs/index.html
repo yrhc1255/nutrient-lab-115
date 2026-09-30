@@ -20411,8 +20411,63 @@ function ReadingEvidence({ onDone, done }) {
                             setFeedback('請回看 A、B 的顏色，紫紅色與藍黑色都可代表澱粉陽性。'); }, children: "\u6AA2\u67E5\u7B54\u6848" }), feedback && (0,jsx_runtime.jsx)("p", { role: "status", className: "discovery", children: feedback }), done && (0,jsx_runtime.jsx)("small", { children: "\u2713 \u5DF2\u5B8C\u6210\u8B49\u64DA\u95B1\u8B80" })] })] });
 }
 
+;// ./.offline-build/sync-config.js
+// Public write-only endpoint. Private spreadsheet IDs never belong here.
+const SYNC_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymC6oFXa8wj39nEcNGsuxnaydp8SkvrONbjecjw_OZPix9abTx-KK3WbDibKvjgMt9sA/exec';
+const COURSE_ID = 'nutrient-lab-115';
+
+;// ./.offline-build/challenge-leaderboard.js
+'use client';
+
+
+
+function ChallengeLeaderboard() {
+    const [leaders, setLeaders] = (0,react.useState)(null);
+    const [busy, setBusy] = (0,react.useState)(true);
+    const [error, setError] = (0,react.useState)('');
+    const [refresh, setRefresh] = (0,react.useState)(0);
+    const controller = (0,react.useRef)(null);
+    (0,react.useEffect)(() => {
+        let disposed = false;
+        const load = async () => {
+            controller.current?.abort();
+            const request = new AbortController();
+            controller.current = request;
+            const timeout = setTimeout(() => request.abort(), 20000);
+            setBusy(true);
+            setError('');
+            try {
+                if (!navigator.onLine || !SYNC_ENDPOINT)
+                    throw new Error('offline');
+                const response = await fetch(`${SYNC_ENDPOINT}?action=leaderboard`, { signal: request.signal, cache: 'no-store', redirect: 'follow' });
+                const data = await response.json();
+                if (!response.ok || data.ok !== true || data.courseId !== COURSE_ID || !Array.isArray(data.leaders) || data.leaders.length > 10 || data.leaders.some((r) => !r || !Number.isInteger(r.rank) || r.rank < 1 || r.rank > 10 || typeof r.classroom !== 'string' || typeof r.seat !== 'string' || !Number.isInteger(r.score) || r.score < 0 || r.score > 60000))
+                    throw new Error('invalid');
+                if (!disposed && controller.current === request)
+                    setLeaders(data.leaders);
+            }
+            catch {
+                if (!disposed && controller.current === request)
+                    setError('排行榜暫時無法更新，請確認網路連線後再試。');
+            }
+            finally {
+                clearTimeout(timeout);
+                if (!disposed && controller.current === request)
+                    setBusy(false);
+            }
+        };
+        const update = () => void load();
+        void load();
+        window.addEventListener('nutrient-score-uploaded', update);
+        window.addEventListener('online', update);
+        return () => { disposed = true; controller.current?.abort(); window.removeEventListener('nutrient-score-uploaded', update); window.removeEventListener('online', update); };
+    }, [refresh]);
+    return (0,jsx_runtime.jsxs)("div", { className: "card local-leaderboard", children: [(0,jsx_runtime.jsx)("span", { className: "label", children: "\u5168\u9AD4\u5B78\u751F\u30FB\u524D 10 \u540D" }), (0,jsx_runtime.jsx)("h2", { children: "\u6975\u9650\u6311\u6230\u82F1\u96C4\u699C" }), (0,jsx_runtime.jsx)("p", { children: "\u6BCF\u4F4D\u540C\u5B78\u53D6\u5DF2\u4E0A\u50B3\u7684\u6700\u9AD8\u5206\uFF0C\u540C\u4E00\u73ED\u7D1A\u3001\u5EA7\u865F\u53EA\u5217\u4E00\u6B21\u3002\u540C\u5206\u4E26\u5217\u540D\u6B21\uFF0C\u4F9D\u73ED\u7D1A\u3001\u5EA7\u865F\u6392\u5E8F\uFF0C\u6700\u591A\u986F\u793A 10 \u4F4D\u3002" }), (0,jsx_runtime.jsx)("button", { className: "outline", disabled: busy, onClick: () => setRefresh(v => v + 1), children: busy ? '讀取排行榜中……' : '更新排行榜' }), (0,jsx_runtime.jsx)("p", { role: "status", children: error ? (leaders ? '以下保留上次載入的排名。' : '') + error : busy ? '正在讀取最新排名……' : leaders?.length ? '完成挑戰並成功上傳後，排行榜會自動更新。' : '目前還沒有已上傳的挑戰成績。' }), !!leaders?.length && (0,jsx_runtime.jsx)("div", { className: "table-scroll", children: (0,jsx_runtime.jsxs)("table", { "aria-label": "\u5168\u9AD4\u5B78\u751F\u6975\u9650\u6311\u6230\u524D\u5341\u540D", children: [(0,jsx_runtime.jsx)("thead", { children: (0,jsx_runtime.jsxs)("tr", { children: [(0,jsx_runtime.jsx)("th", { scope: "col", children: "\u540D\u6B21" }), (0,jsx_runtime.jsx)("th", { scope: "col", children: "\u73ED\u7D1A" }), (0,jsx_runtime.jsx)("th", { scope: "col", children: "\u5EA7\u865F" }), (0,jsx_runtime.jsx)("th", { scope: "col", children: "\u6700\u9AD8\u5206" })] }) }), (0,jsx_runtime.jsx)("tbody", { children: leaders.map(r => (0,jsx_runtime.jsxs)("tr", { children: [(0,jsx_runtime.jsx)("td", { children: r.rank }), (0,jsx_runtime.jsx)("td", { children: r.classroom }), (0,jsx_runtime.jsx)("td", { children: r.seat }), (0,jsx_runtime.jsx)("td", { children: r.score.toLocaleString() })] }, JSON.stringify([r.classroom, r.seat]))) })] }) })] });
+}
+
 ;// ./.offline-build/course-games.js
 'use client';
+
 
 
 
@@ -20490,13 +20545,8 @@ function Challenge({ history, onFinish }) {
         finish(r);
         return;
     } r.index++; r.position = 0; r.phase = 'running'; setIndex(r.index); setPosition(0); setOptions(shuffle(CHALLENGE[r.index].options)); setPhase('running'); };
-    return (0,jsx_runtime.jsxs)("section", { className: "challenge-shell", children: [(0,jsx_runtime.jsxs)("div", { className: "challenge-intro card", children: [(0,jsx_runtime.jsx)("span", { className: "label", children: "\u9650\u6642\u6311\u6230\u30FB\u672C\u6A5F\u82F1\u96C4\u699C" }), (0,jsx_runtime.jsx)("h2", { children: "\u5FEB\u4E00\u9EDE\u5224\u65B7\uFF0C\u4E5F\u8981\u5224\u65B7\u6B63\u78BA" }), (0,jsx_runtime.jsx)("p", { children: "\u5171 12 \u984C\u30013 \u6B21\u751F\u547D\u3002\u6307\u6A19\u5230\u7D42\u9EDE\u524D\u9078\u51FA\u990A\u5206\u985E\u5225\uFF1B\u8D8A\u65E9\u7B54\u5C0D\uFF0C\u5F97\u5206\u8D8A\u9AD8\u3002\u4F5C\u7B54\u5F8C\u7ACB\u5373\u9032\u5165\u4E0B\u4E00\u984C\uFF0C\u4E0A\u4E00\u984C\u56DE\u994B\u6703\u4FDD\u7559\u5728\u4E0B\u65B9\uFF1B\u6700\u5F8C\u4E00\u984C\u6216\u751F\u547D\u7528\u5B8C\u6703\u81EA\u52D5\u7D50\u7B97\u3002" }), (0,jsx_runtime.jsxs)("details", { children: [(0,jsx_runtime.jsx)("summary", { children: "\u67E5\u770B\u8A08\u5206\u898F\u5247" }), (0,jsx_runtime.jsx)("p", { children: "\u6307\u6A19\u6BCF 20 \u6BEB\u79D2\u524D\u9032 0.35\uFF0B\u984C\u76EE\u7D22\u5F15\u00D70.015\uFF08\u7D22\u5F15\u5F9E 0 \u958B\u59CB\uFF09\u3002\u7B54\u5C0D\u5F97\u5206\u70BA 5,000\uFF0D45\u00D7\u4F4D\u7F6E\uFF0C\u53D6\u6574\u6578\uFF0C\u6700\u4F4E 500 \u5206\u3002\u7B54\u932F\u6263 1,000 \u5206\u8207 1 \u6B21\u751F\u547D\uFF1B\u903E\u6642\u53EA\u6263\u751F\u547D\u3002\u5206\u6578\u6700\u4F4E 0 \u5206\u3002\u751F\u547D\u7528\u5B8C\u6216\u7B54\u5B8C\u984C\u5EAB\u5373\u7D50\u675F\u3002" })] })] }), (0,jsx_runtime.jsxs)("div", { className: "challenge-arena", children: [(0,jsx_runtime.jsxs)("div", { className: "challenge-hud", children: [(0,jsx_runtime.jsxs)("span", { children: ["\u7B2C ", index + 1, "\uFF0F12 \u984C"] }), (0,jsx_runtime.jsxs)("strong", { children: [score.toLocaleString(), " \u5206"] }), (0,jsx_runtime.jsxs)("span", { children: ["\u751F\u547D ", lives, "\uFF0F3"] }), ['running', 'paused'].includes(phase) && (0,jsx_runtime.jsx)("button", { className: "outline", onClick: pause, children: phase === 'paused' ? '繼續計時' : '暫停' })] }), phase === 'ready' ? (0,jsx_runtime.jsxs)("div", { className: "challenge-welcome", children: [(0,jsx_runtime.jsx)("span", { className: "challenge-star", children: "\u2726" }), (0,jsx_runtime.jsx)("h2", { children: "\u6E96\u5099\u597D\u8FCE\u63A5\u6975\u9650\u6311\u6230\u4E86\u55CE\uFF1F" }), (0,jsx_runtime.jsx)("p", { children: "\u958B\u59CB\u5F8C\u6307\u6A19\u6703\u79FB\u52D5\uFF0C\u53EF\u96A8\u6642\u66AB\u505C\u3002\u5207\u63DB\u5206\u9801\u4E5F\u6703\u81EA\u52D5\u66AB\u505C\u3002" }), (0,jsx_runtime.jsx)("button", { className: "primary", onClick: start, children: "\u958B\u59CB\u8A08\u6642\u6311\u6230" })] }) : phase === 'finished' ? (0,jsx_runtime.jsxs)("div", { className: "challenge-welcome", children: [(0,jsx_runtime.jsx)("span", { className: "challenge-star", children: "\u2726" }), (0,jsx_runtime.jsxs)("h2", { children: [score.toLocaleString(), " \u5206"] }), (0,jsx_runtime.jsxs)("p", { children: ["\u5B8C\u6210 ", runtime.current.answers.length, " \u984C\uFF0C\u7B54\u5C0D ", runtime.current.correct.filter(Boolean).length, " \u984C\u3002"] }), (0,jsx_runtime.jsx)("button", { className: "primary", onClick: start, children: "\u518D\u6311\u6230\u4E00\u6B21" })] }) : (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [(0,jsx_runtime.jsxs)("div", { className: "challenge-track", role: "progressbar", "aria-label": "\u672C\u984C\u6642\u9593\u9032\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": Math.round(position), children: [(0,jsx_runtime.jsx)("div", { style: { width: `${position}%` } }), (0,jsx_runtime.jsx)("span", { style: { left: `${Math.min(position, 94)}%` }, children: "\u25C6" })] }), (0,jsx_runtime.jsxs)("div", { className: "track-labels", children: [(0,jsx_runtime.jsx)("span", { children: "\u5FEB\u901F\u56DE\u7B54\uFF0C\u722D\u53D6\u9AD8\u5206" }), (0,jsx_runtime.jsx)("span", { children: "\u7D42\u9EDE" })] }), (0,jsx_runtime.jsx)("h2", { children: CHALLENGE[index].prompt }), phase === 'paused' ? (0,jsx_runtime.jsxs)("div", { className: "pause-panel", children: [(0,jsx_runtime.jsx)("strong", { children: "\u5DF2\u66AB\u505C" }), (0,jsx_runtime.jsx)("p", { children: "\u6642\u9593\u505C\u6B62\uFF0C\u6E96\u5099\u597D\u518D\u7E7C\u7E8C\u3002" }), (0,jsx_runtime.jsx)("button", { className: "primary", onClick: pause, children: "\u7E7C\u7E8C\u8A08\u6642" })] }) : (0,jsx_runtime.jsx)("div", { className: "challenge-choices", children: options.map(a => (0,jsx_runtime.jsx)("button", { disabled: phase !== 'running', onClick: () => resolveRef.current(a), children: a }, a)) })] }), notice && (0,jsx_runtime.jsx)("div", { className: "challenge-feedback", role: "status", children: (0,jsx_runtime.jsx)("p", { children: notice }) })] }), (0,jsx_runtime.jsxs)("div", { className: "card local-leaderboard", children: [(0,jsx_runtime.jsx)("span", { className: "label", children: "\u53EA\u5217\u9019\u4F4D\u540C\u5B78\u7684\u672C\u6A5F\u7D00\u9304" }), (0,jsx_runtime.jsx)("h2", { children: "\u6211\u7684\u6311\u6230\u82F1\u96C4\u699C" }), history.length ? (0,jsx_runtime.jsx)("div", { className: "table-scroll", children: (0,jsx_runtime.jsxs)("table", { children: [(0,jsx_runtime.jsx)("thead", { children: (0,jsx_runtime.jsxs)("tr", { children: [(0,jsx_runtime.jsx)("th", { children: "\u6392\u540D" }), (0,jsx_runtime.jsx)("th", { children: "\u5F97\u5206" }), (0,jsx_runtime.jsx)("th", { children: "\u7B54\u5C0D\uFF0F\u4F5C\u7B54" }), (0,jsx_runtime.jsx)("th", { children: "\u5B8C\u6210\u6642\u9593" })] }) }), (0,jsx_runtime.jsx)("tbody", { children: [...history].sort((a, b) => b.score - a.score).map((r, i) => (0,jsx_runtime.jsxs)("tr", { children: [(0,jsx_runtime.jsx)("td", { children: i + 1 }), (0,jsx_runtime.jsx)("td", { children: r.score.toLocaleString() }), (0,jsx_runtime.jsxs)("td", { children: [r.correct.filter(Boolean).length, "\uFF0F", r.answers.length] }), (0,jsx_runtime.jsx)("td", { children: new Date(r.at).toLocaleString('zh-TW') })] }, r.at)) })] }) }) : (0,jsx_runtime.jsx)("p", { children: "\u5B8C\u6210\u4E00\u6B21\u6311\u6230\u5F8C\uFF0C\u6210\u7E3E\u5C31\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002" })] })] });
+    return (0,jsx_runtime.jsxs)("section", { className: "challenge-shell", children: [(0,jsx_runtime.jsxs)("div", { className: "challenge-intro card", children: [(0,jsx_runtime.jsx)("span", { className: "label", children: "\u9650\u6642\u6311\u6230\u30FB\u5168\u9AD4\u5B78\u751F\u82F1\u96C4\u699C" }), (0,jsx_runtime.jsx)("h2", { children: "\u5FEB\u4E00\u9EDE\u5224\u65B7\uFF0C\u4E5F\u8981\u5224\u65B7\u6B63\u78BA" }), (0,jsx_runtime.jsx)("p", { children: "\u5171 12 \u984C\u30013 \u6B21\u751F\u547D\u3002\u6307\u6A19\u5230\u7D42\u9EDE\u524D\u9078\u51FA\u990A\u5206\u985E\u5225\uFF1B\u8D8A\u65E9\u7B54\u5C0D\uFF0C\u5F97\u5206\u8D8A\u9AD8\u3002\u4F5C\u7B54\u5F8C\u7ACB\u5373\u9032\u5165\u4E0B\u4E00\u984C\uFF0C\u4E0A\u4E00\u984C\u56DE\u994B\u6703\u4FDD\u7559\u5728\u4E0B\u65B9\uFF1B\u6700\u5F8C\u4E00\u984C\u6216\u751F\u547D\u7528\u5B8C\u6703\u81EA\u52D5\u7D50\u7B97\u3002" }), (0,jsx_runtime.jsxs)("details", { children: [(0,jsx_runtime.jsx)("summary", { children: "\u67E5\u770B\u8A08\u5206\u898F\u5247" }), (0,jsx_runtime.jsx)("p", { children: "\u6307\u6A19\u6BCF 20 \u6BEB\u79D2\u524D\u9032 0.35\uFF0B\u984C\u76EE\u7D22\u5F15\u00D70.015\uFF08\u7D22\u5F15\u5F9E 0 \u958B\u59CB\uFF09\u3002\u7B54\u5C0D\u5F97\u5206\u70BA 5,000\uFF0D45\u00D7\u4F4D\u7F6E\uFF0C\u53D6\u6574\u6578\uFF0C\u6700\u4F4E 500 \u5206\u3002\u7B54\u932F\u6263 1,000 \u5206\u8207 1 \u6B21\u751F\u547D\uFF1B\u903E\u6642\u53EA\u6263\u751F\u547D\u3002\u5206\u6578\u6700\u4F4E 0 \u5206\u3002\u751F\u547D\u7528\u5B8C\u6216\u7B54\u5B8C\u984C\u5EAB\u5373\u7D50\u675F\u3002" })] })] }), (0,jsx_runtime.jsxs)("div", { className: "challenge-arena", children: [(0,jsx_runtime.jsxs)("div", { className: "challenge-hud", children: [(0,jsx_runtime.jsxs)("span", { children: ["\u7B2C ", index + 1, "\uFF0F12 \u984C"] }), (0,jsx_runtime.jsxs)("strong", { children: [score.toLocaleString(), " \u5206"] }), (0,jsx_runtime.jsxs)("span", { children: ["\u751F\u547D ", lives, "\uFF0F3"] }), ['running', 'paused'].includes(phase) && (0,jsx_runtime.jsx)("button", { className: "outline", onClick: pause, children: phase === 'paused' ? '繼續計時' : '暫停' })] }), phase === 'ready' ? (0,jsx_runtime.jsxs)("div", { className: "challenge-welcome", children: [(0,jsx_runtime.jsx)("span", { className: "challenge-star", children: "\u2726" }), (0,jsx_runtime.jsx)("h2", { children: "\u6E96\u5099\u597D\u8FCE\u63A5\u6975\u9650\u6311\u6230\u4E86\u55CE\uFF1F" }), (0,jsx_runtime.jsx)("p", { children: "\u958B\u59CB\u5F8C\u6307\u6A19\u6703\u79FB\u52D5\uFF0C\u53EF\u96A8\u6642\u66AB\u505C\u3002\u5207\u63DB\u5206\u9801\u4E5F\u6703\u81EA\u52D5\u66AB\u505C\u3002" }), (0,jsx_runtime.jsx)("button", { className: "primary", onClick: start, children: "\u958B\u59CB\u8A08\u6642\u6311\u6230" })] }) : phase === 'finished' ? (0,jsx_runtime.jsxs)("div", { className: "challenge-welcome", children: [(0,jsx_runtime.jsx)("span", { className: "challenge-star", children: "\u2726" }), (0,jsx_runtime.jsxs)("h2", { children: [score.toLocaleString(), " \u5206"] }), (0,jsx_runtime.jsxs)("p", { children: ["\u5B8C\u6210 ", runtime.current.answers.length, " \u984C\uFF0C\u7B54\u5C0D ", runtime.current.correct.filter(Boolean).length, " \u984C\u3002"] }), (0,jsx_runtime.jsx)("button", { className: "primary", onClick: start, children: "\u518D\u6311\u6230\u4E00\u6B21" })] }) : (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [(0,jsx_runtime.jsxs)("div", { className: "challenge-track", role: "progressbar", "aria-label": "\u672C\u984C\u6642\u9593\u9032\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": Math.round(position), children: [(0,jsx_runtime.jsx)("div", { style: { width: `${position}%` } }), (0,jsx_runtime.jsx)("span", { style: { left: `${Math.min(position, 94)}%` }, children: "\u25C6" })] }), (0,jsx_runtime.jsxs)("div", { className: "track-labels", children: [(0,jsx_runtime.jsx)("span", { children: "\u5FEB\u901F\u56DE\u7B54\uFF0C\u722D\u53D6\u9AD8\u5206" }), (0,jsx_runtime.jsx)("span", { children: "\u7D42\u9EDE" })] }), (0,jsx_runtime.jsx)("h2", { children: CHALLENGE[index].prompt }), phase === 'paused' ? (0,jsx_runtime.jsxs)("div", { className: "pause-panel", children: [(0,jsx_runtime.jsx)("strong", { children: "\u5DF2\u66AB\u505C" }), (0,jsx_runtime.jsx)("p", { children: "\u6642\u9593\u505C\u6B62\uFF0C\u6E96\u5099\u597D\u518D\u7E7C\u7E8C\u3002" }), (0,jsx_runtime.jsx)("button", { className: "primary", onClick: pause, children: "\u7E7C\u7E8C\u8A08\u6642" })] }) : (0,jsx_runtime.jsx)("div", { className: "challenge-choices", children: options.map(a => (0,jsx_runtime.jsx)("button", { disabled: phase !== 'running', onClick: () => resolveRef.current(a), children: a }, a)) })] }), notice && (0,jsx_runtime.jsx)("div", { className: "challenge-feedback", role: "status", children: (0,jsx_runtime.jsx)("p", { children: notice }) })] }), (0,jsx_runtime.jsx)(ChallengeLeaderboard, {})] });
 }
-
-;// ./.offline-build/sync-config.js
-// Public write-only endpoint. Private spreadsheet IDs never belong here.
-const SYNC_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymC6oFXa8wj39nEcNGsuxnaydp8SkvrONbjecjw_OZPix9abTx-KK3WbDibKvjgMt9sA/exec';
-const COURSE_ID = 'nutrient-lab-115';
 
 ;// ./.offline-build/score-sync.js
 
@@ -20571,8 +20621,10 @@ function ScoreSyncPanel({ state, teacher }) {
                 acknowledge(queue[0]);
                 queue = readQueue();
             }
-            if (!teacherRef.current)
+            if (!teacherRef.current) {
                 setMessage('成績已上傳至老師的成績表。');
+                window.dispatchEvent(new Event('nutrient-score-uploaded'));
+            }
         }
         catch {
             setMessage('成績尚未上傳，已保留在本機；連線後會重試。');
